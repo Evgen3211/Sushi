@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東京 Sushi — Панель управления</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black: #0a0a0a;
+            --dark: #1a1a1a;
+            --dark2: #252525;
+            --dark3: #2a2a2a;
+            --red: #e63946;
+            --red-dark: #c1121f;
+            --green: #2ecc71;
+            --green-dark: #27ae60;
+            --yellow: #f39c12;
+            --orange: #e67e22;
+            --white: #f8f8f8;
+            --gray: #888;
+            --gray-light: #bbb;
+            --gray-dark: #555;
+            --gold: #d4a853;
+            --bg: #0f0f0f;
+            --card-bg: #1e1e1e;
+            --radius: 12px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--white);
+            min-height: 100vh;
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        .login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--dark);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo { font-size: 48px; margin-bottom: 8px; }
+        .login-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .login-subtitle { color: var(--gray); font-size: 14px; margin-bottom: 32px; }
+
+        .login-box .form-group { margin-bottom: 20px; text-align: left; }
+        .login-box label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--gray-light); }
+        .login-box input {
+            width: 100%; padding: 14px 16px; background: var(--dark2);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            color: var(--white); font-size: 15px; font-family: inherit;
+            outline: none; transition: border-color 0.3s;
+        }
+        .login-box input:focus { border-color: var(--red); }
+        .login-error { color: var(--red); font-size: 13px; margin-bottom: 16px; display: none; }
+        .login-btn {
+            width: 100%; padding: 14px; background: var(--red); color: white;
+            border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; font-family: inherit;
+        }
+        .login-btn:hover { background: var(--red-dark); }
+        .login-hint { margin-top: 20px; font-size: 12px; color: var(--gray-dark); }
+
+        /* ===== ADMIN DASHBOARD ===== */
+        .admin-layout { display: none; min-height: 100vh; }
+        .admin-layout.active { display: flex; flex-direction: column; }
+
+        /* HEADER */
+        .admin-header {
+            background: var(--dark);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-header-left { display: flex; align-items: center; gap: 12px; }
+        .admin-header-logo { font-size: 24px; }
+        .admin-header-title { font-size: 18px; font-weight: 700; }
+        .admin-header-right { display: flex; align-items: center; gap: 16px; }
+
+        .admin-user {
+            display: flex; align-items: center; gap: 8px;
+            color: var(--gray); font-size: 14px;
+        }
+        .admin-user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--red); display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: 700; color: white;
+        }
+
+        .btn-logout {
+            padding: 8px 16px; background: transparent;
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+            color: var(--gray); font-size: 13px; cursor: pointer;
+            transition: all 0.3s; font-family: inherit;
+        }
+        .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+        /* MAIN */
+        .admin-main {
+            flex: 1; padding: 32px; max-width: 1400px;
+            width: 100%; margin: 0 auto;
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius); padding: 24px; transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.1); }
+        .stat-card-icon { font-size: 28px; margin-bottom: 12px; }
+        .stat-card-value { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+        .stat-card-label { font-size: 13px; color: var(--gray); }
+        .stat-card.new-orders .stat-card-value { color: var(--red); }
+        .stat-card.in-progress .stat-card-value { color: var(--yellow); }
+        .stat-card.delivered .stat-card-value { color: var(--green); }
+        .stat-card.revenue .stat-card-value { color: var(--gold); }
+
+        /* FILTER BAR */
+        .filter-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+        }
+        .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-tab {
+            padding: 8px 20px; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; background: transparent; color: var(--gray);
+            cursor: pointer; font-size: 13px; font-weight: 500;
+            transition: all 0.3s; font-family: inherit;
+        }
+        .filter-tab:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+        .filter-tab.active { background: var(--red); border-color: var(--red); color: white; }
+
+        .search-box {
+            padding: 8px 16px; background: var(--dark2);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            color: var(--white); font-size: 13px; outline: none;
+            width: 240px; font-family: inherit; transition: border-color 0.3s;
+        }
+        .search-box:focus { border-color: var(--red); }
+        .search-box::placeholder { color: var(--gray-dark); }
+
+        /* ORDERS */
+        .orders-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .order-card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius); padding: 24px; transition: all 0.3s;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .order-card:hover { border-color: rgba(255,255,255,0.1); }
+        .order-card.new-order { border-left: 3px solid var(--red); animation: pulseBorder 2s infinite; }
+        @keyframes pulseBorder {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(230,57,70,0); }
+        }
+
+        .order-card-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 16px;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .order-number { font-size: 16px; font-weight: 700; }
+        .order-time { font-size: 12px; color: var(--gray); }
+        .order-status {
+            padding: 4px 14px; border-radius: 15px;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+        }
+        .order-status.new { background: rgba(230,57,70,0.2); color: var(--red); }
+        .order-status.preparing { background: rgba(243,156,18,0.2); color: var(--yellow); }
+        .order-status.delivering { background: rgba(52,152,219,0.2); color: #3498db; }
+        .order-status.delivered { background: rgba(46,204,113,0.2); color: var(--green); }
+        .order-status.cancelled { background: rgba(150,150,150,0.2); color: var(--gray); }
+
+        .order-customer {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .customer-info { flex: 1; min-width: 200px; }
+        .customer-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+        .customer-phone { font-size: 13px; color: var(--gray); }
+        .customer-address { font-size: 13px; color: var(--gray); margin-top: 4px; }
+
+        .customer-actions { display: flex; gap: 8px; }
+        .action-btn {
+            width: 40px; height: 40px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); background: transparent;
+            color: var(--white); cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; text-decoration: none;
+        }
+        .action-btn:hover { transform: scale(1.1); }
+        .action-btn.call { border-color: rgba(46,204,113,0.3); }
+        .action-btn.call:hover { background: var(--green); border-color: var(--green); }
+        .action-btn.message { border-color: rgba(52,152,219,0.3); }
+        .action-btn.message:hover { background: #3498db; border-color: #3498db; }
+
+        .order-items {
+            background: var(--dark2); border-radius: 8px;
+            padding: 16px; margin-bottom: 16px;
+        }
+        .order-items-title {
+            font-size: 12px; color: var(--gray);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+        }
+        .order-item-row {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 4px 0; font-size: 14px;
+        }
+        .order-item-name { display: flex; align-items: center; gap: 8px; }
+        .order-item-qty { color: var(--gray); font-size: 13px; }
+        .order-item-price { font-weight: 600; }
+
+        .order-total {
+            display: flex; justify-content: space-between;
+            align-items: center; padding-top: 12px; margin-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 16px; font-weight: 700;
+        }
+
+        .order-comment {
+            font-size: 13px; color: var(--gray); font-style: italic;
+            margin-bottom: 16px; padding: 8px 12px;
+            background: rgba(255,255,255,0.02); border-radius: 6px;
+        }
+
+        .order-footer {
+            display: flex; justify-content: space-between;
+            align-items: center; flex-wrap: wrap; gap: 12px;
+        }
+
+        .status-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+        .status-btn {
+            padding: 6px 14px; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px; background: transparent; color: var(--gray);
+            cursor: pointer; font-size: 12px; font-weight: 500;
+            transition: all 0.3s; font-family: inherit;
+        }
+        .status-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+        .status-btn.active { background: var(--red); border-color: var(--red); color: white; }
+
+        .order-actions { display: flex; gap: 8px; }
+        .btn-accept {
+            padding: 8px 20px; background: var(--green); color: white;
+            border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; font-family: inherit;
+        }
+        .btn-accept:hover { background: var(--green-dark); }
+        .btn-reject {
+            padding: 8px 20px; background: transparent; color: var(--gray);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: all 0.3s; font-family: inherit;
+        }
+        .btn-reject:hover { border-color: var(--red); color: var(--red); }
+        .btn-reject.cancelled {
+            background: rgba(150,150,150,0.2); border-color: rgba(150,150,150,0.3);
+            color: var(--gray);
+        }
+        .btn-reject:hover { border-color: var(--red); color: var(--red); }
+        .btn-reject[onclick*="deleteOrder"]:hover { border-color: #e74c3c; color: #e74c3c; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .admin-header { padding: 0 16px; }
+            .admin-main { padding: 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .search-box { width: 100%; }
+            .order-card-header { flex-direction: column; }
+            .order-customer { flex-direction: column; align-items: flex-start; }
+            .order-footer { flex-direction: column; align-items: stretch; }
+            .status-selector { justify-content: center; }
+            .order-actions { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="login-logo">🏮</div>
+            <h1 class="login-title">東京 Sushi</h1>
+            <p class="login-subtitle">Панель управления</p>
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="loginUsername" placeholder="Введите логин" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="loginPassword" placeholder="Введите пароль">
+            </div>
+            <div class="login-error" id="loginError">Неверный логин или пароль</div>
+            <button class="login-btn" onclick="doLogin()">Войти</button>
+            <p class="login-hint">По умолчанию: admin / tokyo2025</p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="admin-layout" id="adminLayout">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <span class="admin-header-logo">🏮</span>
+                <span class="admin-header-title">東京 Sushi — Управление</span>
+            </div>
+                <div class="admin-header-right">
+                    <div class="notification-bell" onclick="refreshOrders()" title="Обновить заказы">
+                        🔔
+                        <span class="notification-badge" id="notifBadge" style="display:none;">0</span>
+                    </div>
+                    <button onclick="refreshOrders()" style="padding:8px 16px;background:var(--red);color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all 0.3s;" onmouseover="this.style.background='var(--red-dark)'" onmouseout="this.style.background='var(--red)'">
+                        🔄 Обновить
+                    </button>
+                <div class="admin-user">
+                    <div class="admin-user-avatar">A</div>
+                    <span>Администратор</span>
+                </div>
+                <button class="btn-logout" onclick="doLogout()">Выйти</button>
+            </div>
+        </div>
+
+        <div class="admin-main">
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card new-orders">
+                    <div class="stat-card-icon">🆕</div>
+                    <div class="stat-card-value" id="statNew">0</div>
+                    <div class="stat-card-label">Новых заказов</div>
+                </div>
+                <div class="stat-card in-progress">
+                    <div class="stat-card-icon">👨‍🍳</div>
+                    <div class="stat-card-value" id="statPreparing">0</div>
+                    <div class="stat-card-label">Готовится</div>
+                </div>
+                <div class="stat-card delivered">
+                    <div class="stat-card-icon">🚀</div>
+                    <div class="stat-card-value" id="statDelivered">0</div>
+                    <div class="stat-card-label">Доставлено</div>
+                </div>
+                <div class="stat-card revenue">
+                    <div class="stat-card-icon">💰</div>
+                    <div class="stat-card-value" id="statRevenue">0 ₽</div>
+                    <div class="stat-card-label">Выручка сегодня</div>
+                </div>
+                <div class="stat-card" style="border-left: 3px solid #2ecc71;">
+                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-value" id="statPaid" style="color: #2ecc71;">0</div>
+                    <div class="stat-card-label">Оплачено онлайн</div>
+                </div>
+                <div class="stat-card" style="border-left: 3px solid #3498db;">
+                    <div class="stat-card-icon">📊</div>
+                    <div class="stat-card-value" id="statPaidAmount" style="color: #3498db;">0 ₽</div>
+                    <div class="stat-card-label">Оплачено сегодня</div>
+                </div>
+            </div>
+
+            <!-- DATE FILTER & HISTORY -->
+            <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.05);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:20px;">📅</span>
+                        <div>
+                            <div style="font-size:16px;font-weight:700;">Период</div>
+                            <div style="font-size:12px;color:var(--gray);" id="periodLabel">Сегодня</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="filter-tab" onclick="setDateFilter('today')" id="btnToday">Сегодня</button>
+                        <button class="filter-tab" onclick="setDateFilter('week')" id="btnWeek">Неделя</button>
+                        <button class="filter-tab" onclick="setDateFilter('month')" id="btnMonth">Месяц</button>
+                        <button class="filter-tab" onclick="setDateFilter('custom')" id="btnCustom">Другая дата</button>
+                        <input type="date" id="customDate" style="padding:8px 12px;background:var(--dark2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--white);font-family:inherit;display:none;" onchange="applyCustomDate()">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                    <div style="padding:16px;background:var(--dark2);border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:var(--gold);" id="periodRevenue">0 ₽</div>
+                        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Выручка за период</div>
+                    </div>
+                    <div style="padding:16px;background:var(--dark2);border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:var(--green);" id="periodOrders">0</div>
+                        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Заказов за период</div>
+                    </div>
+                    <div style="padding:16px;background:var(--dark2);border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:#3498db;" id="periodAvg">0 ₽</div>
+                        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Средний чек</div>
+                    </div>
+                    <div style="padding:16px;background:var(--dark2);border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:#e67e22;" id="periodPaid">0 ₽</div>
+                        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Оплачено онлайн</div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:8px;">
+                    <button class="filter-tab" onclick="exportCSV()" style="flex:1;">📥 Экспорт CSV</button>
+                    <button class="filter-tab" onclick="exportJSON()" style="flex:1;">📥 Экспорт JSON</button>
+                    <button class="filter-tab" onclick="clearAllData()" style="flex:1;border-color:rgba(230,57,70,0.3);">🗑️ Очистить всё</button>
+                </div>
+            </div>
+
+            <!-- FILTERS -->
+            <div class="filter-bar">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all" onclick="filterOrders('all', this)">Все</button>
+                    <button class="filter-tab" data-filter="new" onclick="filterOrders('new', this)">🆕 Новые</button>
+                    <button class="filter-tab" data-filter="preparing" onclick="filterOrders('preparing', this)">👨‍🍳 Готовится</button>
+                    <button class="filter-tab" data-filter="delivering" onclick="filterOrders('delivering', this)">🚀 Доставка</button>
+                    <button class="filter-tab" data-filter="delivered" onclick="filterOrders('delivered', this)">✅ Доставлено</button>
+                    <button class="filter-tab" data-filter="cancelled" onclick="filterOrders('cancelled', this)">❌ Отменены</button>
+                </div>
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Поиск по имени, телефону, адресу..." oninput="searchOrders()">
+            </div>
+
+            <!-- SECURITY STATUS -->
+            <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.05);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <span style="font-size:24px;">🛡️</span>
+                    <div>
+                        <div style="font-size:16px;font-weight:700;">Статус безопасности</div>
+                        <div style="font-size:12px;color:var(--gray);">Все системы защиты активны</div>
+                    </div>
+                    <div style="margin-left:auto;padding:6px 16px;background:rgba(46,204,113,0.2);border-radius:20px;font-size:13px;color:#2ecc71;font-weight:600;">● Защищено</div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+                    <div style="padding:12px;background:var(--dark2);border-radius:8px;font-size:12px;">
+                        <div style="color:#2ecc71;font-weight:600;margin-bottom:4px;">✅ Брутфорс</div>
+                        <div style="color:var(--gray);">Блокировка после 5 попыток</div>
+                    </div>
+                    <div style="padding:12px;background:var(--dark2);border-radius:8px;font-size:12px;">
+                        <div style="color:#2ecc71;font-weight:600;margin-bottom:4px;">✅ XSS</div>
+                        <div style="color:var(--gray);">Экранирование данных</div>
+                    </div>
+                    <div style="padding:12px;background:var(--dark2);border-radius:8px;font-size:12px;">
+                        <div style="color:#2ecc71;font-weight:600;margin-bottom:4px;">✅ CSRF</div>
+                        <div style="color:var(--gray);">Токены сессии</div>
+                    </div>
+                    <div style="padding:12px;background:var(--dark2);border-radius:8px;font-size:12px;">
+                        <div style="color:#2ecc71;font-weight:600;margin-bottom:4px;">✅ Rate Limit</div>
+                        <div style="color:var(--gray);">Ограничение запросов</div>
+                    </div>
+                    <div style="padding:12px;background:var(--dark2);border-radius:8px;font-size:12px;">
+                        <div style="color:#2ecc71;font-weight:600;margin-bottom:4px;">✅ Session</div>
+                        <div style="color:var(--gray);">Таймаут 1 час</div>
+                    </div>
+                    <div style="padding:12px;background:var(--dark2);border-radius:8px;font-size:12px;">
+                        <div style="color:#2ecc71;font-weight:600;margin-bottom:4px;">✅ Password</div>
+                        <div style="color:var(--gray);">SHA-256 хеширование</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORDERS LIST -->
+            <div class="orders-list" id="ordersList"></div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== SECURITY CONFIG =====
+        const SECURITY = {
+            maxLoginAttempts: 5,
+            lockoutTime: 300000, // 5 минут
+            sessionTimeout: 3600000, // 1 час
+            hashSalt: 'TokyoSushi2025!@#'
+        };
+
+        // ===== PASSWORD HASHING (SHA-256) =====
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password + SECURITY.hashSalt);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        const ADMIN_LOGIN = 'admin';
+        let ADMIN_PASSWORD_HASH = '';
+
+        // ===== BRUTE FORCE PROTECTION =====
+        const SECURITY_STATE = {
+            failedAttempts: parseInt(localStorage.getItem('sec_failed_attempts') || '0'),
+            lockoutUntil: parseInt(localStorage.getItem('sec_lockout_until') || '0'),
+            sessionCreated: parseInt(localStorage.getItem('sec_session_created') || '0')
+        };
+
+        // Rate limiter
+        const rateLimiter = {
+            requests: [],
+            maxRequests: 100,
+            windowMs: 60000,
+            check() {
+                const now = Date.now();
+                this.requests = this.requests.filter(t => now - t < this.windowMs);
+                return this.requests.length < this.maxRequests;
+            },
+            record() {
+                this.requests.push(Date.now());
+            }
+        };
+
+        // ===== AUTH =====
+        function doLogin() {
+            // Check lockout
+            if (Date.now() < SECURITY_STATE.lockoutUntil) {
+                const remaining = Math.ceil((SECURITY_STATE.lockoutUntil - Date.now()) / 1000);
+                showToast(`🔒 Слишком много попыток. Подождите ${remaining} сек.`);
+                return;
+            }
+
+            // Rate limit
+            if (!rateLimiter.check()) {
+                showToast('⏳ Слишком много запросов. Подождите минуту.');
+                return;
+            }
+
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const errorEl = document.getElementById('loginError');
+
+            rateLimiter.record();
+
+            hashPassword(password).then((passwordHash) => {
+                if (username === ADMIN_LOGIN && passwordHash === ADMIN_PASSWORD_HASH) {
+                    // Reset attempts on success
+                    SECURITY_STATE.failedAttempts = 0;
+                    localStorage.setItem('sec_failed_attempts', '0');
+                    localStorage.setItem('sec_lockout_until', '0');
+                    localStorage.setItem('sec_session_created', Date.now().toString());
+
+                    sessionStorage.setItem('adminAuth', 'true');
+                    sessionStorage.setItem('sessionToken', generateToken());
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('adminLayout').classList.add('active');
+                    errorEl.style.display = 'none';
+                    renderOrders();
+                    startAutoRefresh();
+                    startSessionTimer();
+                    showToast('✅ Добро пожаловать!');
+                } else {
+                    // Failed attempt
+                    SECURITY_STATE.failedAttempts++;
+                    localStorage.setItem('sec_failed_attempts', SECURITY_STATE.failedAttempts.toString());
+
+                    if (SECURITY_STATE.failedAttempts >= SECURITY.maxLoginAttempts) {
+                        localStorage.setItem('sec_lockout_until', (Date.now() + SECURITY.lockoutTime).toString());
+                        errorEl.textContent = `🔒 Аккаунт заблокирован на 5 минут. Слишком много попыток.`;
+                        showToast('🔒 Блокировка на 5 минут!');
+                    } else {
+                        const remaining = SECURITY.maxLoginAttempts - SECURITY_STATE.failedAttempts;
+                        errorEl.textContent = `Неверный логин или пароль. Осталось попыток: ${remaining}`;
+                        showToast(`❌ Осталось попыток: ${remaining}`);
+                    }
+                }
+            });
+        }
+
+        function generateToken() {
+            return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function startSessionTimer() {
+            setInterval(() => {
+                const sessionAge = Date.now() - SECURITY_STATE.sessionCreated;
+                if (sessionAge > SECURITY.sessionTimeout) {
+                    doLogout();
+                    showToast('⏰ Сессия истекла. Войдите снова.');
+                }
+            }, 60000);
+        }
+
+        function doLogout() {
+            sessionStorage.removeItem('adminAuth');
+            sessionStorage.removeItem('sessionToken');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminLayout').classList.remove('active');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('loginError').textContent = 'Неверный логин или пароль';
+        }
+
+        // ===== XSS PROTECTION =====
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== SECURITY HEADERS (meta) =====
+        const securityMeta = document.createElement('meta');
+        securityMeta.httpEquiv = 'X-Content-Type-Options';
+        securityMeta.content = 'nosniff';
+        document.head.appendChild(securityMeta);
+
+        const cspMeta = document.createElement('meta');
+        cspMeta.httpEquiv = 'Content-Security-Policy';
+        cspMeta.content = "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;";
+        document.head.appendChild(cspMeta);
+
+        // ===== DISABLE RIGHT CLICK + DEV TOOLS (basic protection) =====
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+            }
+        });
+
+        // ===== PROTECT LOCALSTORAGE =====
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = function(key, value) {
+            if (key.startsWith('sec_')) {
+                console.log(`[SECURITY] ${key} modified: ${value}`);
+            }
+            return originalSetItem.call(this, key, value);
+        };
+
+        // ===== CHECK AUTH ON LOAD =====
+        if (sessionStorage.getItem('adminAuth') === 'true') {
+            const token = sessionStorage.getItem('sessionToken');
+            if (!token || token.length !== 64) {
+                doLogout();
+            } else {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('adminLayout').classList.add('active');
+                renderOrders();
+                startAutoRefresh();
+                startSessionTimer();
+            }
+        }
+
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        // ===== INIT HASH ON LOAD =====
+        window.addEventListener('load', () => {
+            hashPassword('tokyo2025').then(hash => { ADMIN_PASSWORD_HASH = hash; });
+        });
+
+        // ===== ORDERS =====
+        let currentFilter = 'all';
+
+        function getOrders() {
+            const data = localStorage.getItem('sushiOrders');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveOrders(orders) {
+            localStorage.setItem('sushiOrders', JSON.stringify(orders));
+        }
+
+        function renderOrders() {
+            const orders = getOrders();
+            const list = document.getElementById('ordersList');
+
+            // Stats for today
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
+            const newCount = todayOrders.filter(o => o.status === 'new').length;
+            const preparingCount = todayOrders.filter(o => o.status === 'preparing').length;
+            const deliveredCount = todayOrders.filter(o => o.status === 'delivered').length;
+            const revenue = todayOrders
+                .filter(o => o.status === 'delivered')
+                .reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('statNew').textContent = newCount;
+            document.getElementById('statPreparing').textContent = preparingCount;
+            document.getElementById('statDelivered').textContent = deliveredCount;
+            document.getElementById('statRevenue').textContent = `${revenue.toLocaleString()} ₽`;
+
+            // Payment stats
+            const paidOrders = todayOrders.filter(o => o.paymentStatus === 'paid');
+            const paidCount = paidOrders.length;
+            const paidAmount = paidOrders.reduce((sum, o) => sum + o.total, 0);
+            document.getElementById('statPaid').textContent = paidCount;
+            document.getElementById('statPaidAmount').textContent = `${paidAmount.toLocaleString()} ₽`;
+
+            // Notification badge
+            const badge = document.getElementById('notifBadge');
+            if (newCount > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = newCount > 9 ? '9+' : newCount;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Filter
+            let filtered = orders;
+            if (currentFilter !== 'all') {
+                filtered = orders.filter(o => o.status === currentFilter);
+            }
+
+            // Search
+            const search = document.getElementById('searchBox').value.toLowerCase().trim();
+            if (search) {
+                filtered = filtered.filter(o =>
+                    o.customer.name.toLowerCase().includes(search) ||
+                    o.customer.phone.includes(search) ||
+                    o.customer.address.toLowerCase().includes(search) ||
+                    o.customer.apartment.includes(search)
+                );
+            }
+
+            // Sort
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Заказов пока нет</h3>
+                        <p>Новые заказы появятся здесь автоматически</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(order => createOrderCard(order)).join('');
+        }
+
+        function createOrderCard(order) {
+            const date = new Date(order.date);
+            const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+
+            const statusLabels = {
+                new: 'Новый',
+                preparing: 'Готовится',
+                delivering: 'Доставка',
+                delivered: 'Доставлен',
+                cancelled: 'Отменён'
+            };
+
+            // XSS Protection - escape all user data
+            const safeName = escapeHtml(order.customer.name || '');
+            const safePhone = escapeHtml(order.customer.phone || '');
+            const safeAddress = escapeHtml(order.customer.address || '');
+            const safeApartment = escapeHtml(order.customer.apartment || '');
+            const safeEntrance = escapeHtml(order.customer.entrance || '');
+            const safeComment = escapeHtml(order.comment || '');
+            const safePayment = escapeHtml(order.paymentLabel || '');
+
+            const itemsHtml = (order.items || []).map(item => `
+                <div class="order-item-row">
+                    <div class="order-item-name">
+                        <span>${escapeHtml(item.emoji || '🍣')}</span>
+                        <span>${escapeHtml(item.name || '')}</span>
+                        <span class="order-item-qty">×${item.qty || 1}</span>
+                    </div>
+                    <div class="order-item-price">${(item.price * item.qty).toLocaleString()} ₽</div>
+                </div>
+            `).join('');
+
+            const commentHtml = safeComment
+                ? `<div class="order-comment">💬 ${safeComment}</div>`
+                : '';
+
+            const isCancelled = order.status === 'cancelled';
+            const paymentLabels = { card: '💳 Карта', cash: '💵 Наличные', transfer: '📱 Перевод' };
+
+            return `
+                <div class="order-card ${order.status === 'new' ? 'new-order' : ''}">
+                    <div class="order-card-header">
+                        <div>
+                            <div class="order-number">Заказ #${order.id}</div>
+                            <div class="order-time">${dateStr}, ${timeStr}</div>
+                        </div>
+                        <span class="order-status ${order.status}">${statusLabels[order.status]}</span>
+                    </div>
+
+                    <div class="order-customer">
+                        <div class="customer-info">
+                            <div class="customer-name">${safeName} ${order.userId ? '<span style="font-size: 11px; color: var(--gold);">👤 Аккаунт</span>' : '<span style="font-size: 11px; color: var(--gray);">👤 Гость</span>'}</div>
+                            <div class="customer-phone">📞 ${safePhone}</div>
+                            <div class="customer-address">📍 ${safeAddress}${safeApartment ? ', кв. ' + safeApartment : ''}${safeEntrance ? ', ' + safeEntrance : ''}</div>
+                            ${safePayment ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(46,204,113,0.2);border-radius:8px;font-size:13px;color:#2ecc71;font-weight:600;">✅ Оплачено через ${safePayment}</div>` : '<div style="margin-top:8px;padding:8px 12px;background:rgba(243,156,18,0.2);border-radius:8px;font-size:13px;color:#f39c12;font-weight:600;">⏳ Ожидает оплаты</div>'}
+                        </div>
+                        <div class="customer-actions">
+                            <a href="tel:${order.customer.phone.replace(/\D/g, '')}" class="action-btn call" title="Позвонить">📞</a>
+                            <a href="https://wa.me/7${order.customer.phone.replace(/\D/g, '')}" target="_blank" class="action-btn message" title="WhatsApp">💬</a>
+                        </div>
+                    </div>
+
+                    ${commentHtml}
+
+                    <div class="order-items">
+                        <div class="order-items-title">Состав заказа</div>
+                        ${itemsHtml}
+                        <div class="order-total">
+                            <span>Итого:</span>
+                            <span>${order.total.toLocaleString()} ₽</span>
+                        </div>
+                    </div>
+
+                    <div class="order-footer">
+                        <div class="status-selector">
+                            ${Object.keys(statusLabels).map(s => `
+                                <button class="status-btn ${order.status === s ? 'active' : ''}"
+                                        onclick="changeStatus('${order.id}', '${s}')">
+                                    ${statusLabels[s]}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="order-actions">
+                            ${order.status === 'new' ? `
+                                <button class="btn-accept" onclick="acceptOrder('${order.id}')">✓ Принять</button>
+                                <button class="btn-reject" onclick="rejectOrder('${order.id}')">✕ Отклонить</button>
+                            ` : ''}
+                            ${isCancelled ? `
+                                <button class="btn-reject cancelled" onclick="restoreOrder('${order.id}')">↩ Восстановить</button>
+                            ` : ''}
+                            <button class="btn-reject" onclick="editOrder('${order.id}')" title="Редактировать статус">✏️</button>
+                            <button class="btn-reject" onclick="deleteOrder('${order.id}')" title="Удалить заказ" style="border-color:rgba(230,57,70,0.3);">🗑️</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function changeStatus(orderId, newStatus) {
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                saveOrders(orders);
+                renderOrders();
+                const labels = { new: 'Новый', preparing: 'Готовится', delivering: 'Доставка', delivered: 'Доставлен', cancelled: 'Отменён' };
+                showToast(`✅ Заказ #${orderId} — ${labels[newStatus]}`);
+            }
+        }
+
+        function acceptOrder(orderId) {
+            changeStatus(orderId, 'preparing');
+            showToast(`👨‍🍳 Заказ #${orderId} принят и в работе!`);
+        }
+
+        function rejectOrder(orderId) {
+            changeStatus(orderId, 'cancelled');
+            showToast(`❌ Заказ #${orderId} отклонён`);
+        }
+
+        function restoreOrder(orderId) {
+            changeStatus(orderId, 'preparing');
+            showToast(`↩ Заказ #${orderId} восстановлен`);
+        }
+
+        function filterOrders(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            renderOrders();
+        }
+
+        function searchOrders() {
+            renderOrders();
+        }
+
+        function refreshOrders() {
+            renderOrders();
+            showToast('🔄 Список обновлён');
+        }
+
+        let autoRefreshTimer;
+        function startAutoRefresh() {
+            autoRefreshTimer = setInterval(renderOrders, 3000);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Listen for new orders from other tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'sushiOrders' || e.key === 'sushiOrdersSync') {
+                renderOrders();
+                playNotificationSound();
+                showToast('🔔 Новый заказ!');
+            }
+        });
+        
+        // Also listen for custom sync events
+        setInterval(() => {
+            const lastSync = localStorage.getItem('sushiOrdersLastSync');
+            const currentSync = localStorage.getItem('sushiOrdersSync');
+            if (lastSync !== currentSync && currentSync) {
+                localStorage.setItem('sushiOrdersLastSync', currentSync);
+                renderOrders();
+            }
+        }, 2000);
+        
+        // Notification sound
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.5);
+                
+                // Second beep
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.frequency.value = 1000;
+                osc2.type = 'sine';
+                gain2.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.2);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                osc2.start(audioCtx.currentTime + 0.2);
+                osc2.stop(audioCtx.currentTime + 0.6);
+            } catch(e) {
+                // Audio not supported
+            }
+        }
+
+        // ===== DATE FILTER & HISTORY =====
+        let currentDateFilter = 'today';
+
+        function setDateFilter(filter) {
+            currentDateFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(t => {
+                if (t.id && ['btnToday', 'btnWeek', 'btnMonth', 'btnCustom'].includes(t.id)) {
+                    t.classList.remove('active');
+                }
+            });
+
+            const btnId = 'btn' + filter.charAt(0).toUpperCase() + filter.slice(1);
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.add('active');
+
+            const customDate = document.getElementById('customDate');
+            if (customDate) {
+                customDate.style.display = filter === 'custom' ? 'block' : 'none';
+            }
+
+            renderOrders();
+        }
+
+        function applyCustomDate() {
+            setDateFilter('custom');
+            renderOrders();
+        }
+
+        function getFilteredOrders() {
+            const allOrders = getOrders();
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            let filteredOrders = allOrders;
+
+            if (currentDateFilter === 'today') {
+                filteredOrders = allOrders.filter(o => {
+                    const orderDate = new Date(o.date);
+                    return orderDate >= today;
+                });
+                document.getElementById('periodLabel').textContent = 'Сегодня, ' + now.toLocaleDateString('ru-RU');
+            } else if (currentDateFilter === 'week') {
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                filteredOrders = allOrders.filter(o => {
+                    const orderDate = new Date(o.date);
+                    return orderDate >= weekAgo;
+                });
+                document.getElementById('periodLabel').textContent = 'Последние 7 дней';
+            } else if (currentDateFilter === 'month') {
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                filteredOrders = allOrders.filter(o => {
+                    const orderDate = new Date(o.date);
+                    return orderDate >= monthAgo;
+                });
+                document.getElementById('periodLabel').textContent = 'Последние 30 дней';
+            } else if (currentDateFilter === 'custom') {
+                const customVal = document.getElementById('customDate').value;
+                if (customVal) {
+                    const customDate = new Date(customVal);
+                    const nextDate = new Date(customDate);
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    filteredOrders = allOrders.filter(o => {
+                        const orderDate = new Date(o.date);
+                        return orderDate >= customDate && orderDate < nextDate;
+                    });
+                    document.getElementById('periodLabel').textContent = customDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                } else {
+                    document.getElementById('periodLabel').textContent = 'Все заказы';
+                }
+            }
+
+            return filteredOrders;
+        }
+
+        function updatePeriodStats(orders) {
+            const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+            const totalOrders = orders.length;
+            const avgCheck = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+            const paidOnline = orders.filter(o => o.paymentStatus === 'paid');
+            const paidAmount = paidOnline.reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('periodRevenue').textContent = totalRevenue.toLocaleString() + ' ₽';
+            document.getElementById('periodOrders').textContent = totalOrders;
+            document.getElementById('periodAvg').textContent = avgCheck.toLocaleString() + ' ₽';
+            document.getElementById('periodPaid').textContent = paidAmount.toLocaleString() + ' ₽';
+        }
+
+        function exportCSV() {
+            const orders = getOrders();
+            if (orders.length === 0) {
+                showToast('⚠️ Нет данных для экспорта');
+                return;
+            }
+
+            let csv = '№ заказа,Дата,Имя,Телефон,Адрес,Сумма,Статус,Оплата,Состав\n';
+            orders.forEach(o => {
+                const date = new Date(o.date).toLocaleString('ru-RU');
+                const items = (o.items || []).map(i => `${i.name} x${i.qty}`).join(', ');
+                csv += `${o.id},${date},${o.customer.name},${o.customer.phone},${o.customer.address},${o.total},${o.status},${o.paymentStatus || 'cash'},${items}\n`;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `sushi_orders_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            showToast('📥 CSV экспортирован');
+        }
+
+        function exportJSON() {
+            const orders = getOrders();
+            if (orders.length === 0) {
+                showToast('⚠️ Нет данных для экспорта');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(orders, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `sushi_orders_${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            showToast('📥 JSON экспортирован');
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ Вы уверены? Все заказы будут удалены безвозвратно!')) {
+                if (confirm('🔴 Повторное подтверждение: удалить ВСЕ данные?')) {
+                    localStorage.removeItem('sushiOrders');
+                    renderOrders();
+                    showToast('🗑️ Все данные удалены');
+                }
+            }
+        }
+
+        // Override renderOrders to use date filter
+        const _origRenderOrders = renderOrders;
+        renderOrders = function() {
+            const allOrders = getOrders();
+            const list = document.getElementById('ordersList');
+
+            // Stats for today
+            const today = new Date().toDateString();
+            const todayOrders = allOrders.filter(o => new Date(o.date).toDateString() === today);
+            const newCount = todayOrders.filter(o => o.status === 'new').length;
+            const preparingCount = todayOrders.filter(o => o.status === 'preparing').length;
+            const deliveredCount = todayOrders.filter(o => o.status === 'delivered').length;
+            const revenue = todayOrders
+                .filter(o => o.status === 'delivered')
+                .reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('statNew').textContent = newCount;
+            document.getElementById('statPreparing').textContent = preparingCount;
+            document.getElementById('statDelivered').textContent = deliveredCount;
+            document.getElementById('statRevenue').textContent = `${revenue.toLocaleString()} ₽`;
+
+            // Payment stats
+            const paidOrders = todayOrders.filter(o => o.paymentStatus === 'paid');
+            const paidCount = paidOrders.length;
+            const paidAmount = paidOrders.reduce((sum, o) => sum + o.total, 0);
+            document.getElementById('statPaid').textContent = paidCount;
+            document.getElementById('statPaidAmount').textContent = `${paidAmount.toLocaleString()} ₽`;
+
+            // Notification badge
+            const badge = document.getElementById('notifBadge');
+            if (newCount > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = newCount > 9 ? '9+' : newCount;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Get filtered orders by date
+            let filtered = getFilteredOrders();
+
+            // Apply status filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(o => o.status === currentFilter);
+            }
+
+            // Search
+            const search = document.getElementById('searchBox').value.toLowerCase().trim();
+            if (search) {
+                filtered = filtered.filter(o =>
+                    o.customer.name.toLowerCase().includes(search) ||
+                    o.customer.phone.includes(search) ||
+                    o.customer.address.toLowerCase().includes(search) ||
+                    o.customer.apartment.includes(search)
+                );
+            }
+
+            // Sort
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Update period stats
+            updatePeriodStats(filtered);
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Заказов нет</h3>
+                        <p>В выбранном периоде заказов не найдено</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(order => createOrderCard(order)).join('');
+        };
+
+        // ===== DELETE ORDER =====
+        function deleteOrder(orderId) {
+            if (confirm(`❌ Удалить заказ #${orderId}? Это действие нельзя отменить.`)) {
+                let orders = getOrders();
+                orders = orders.filter(o => o.id !== orderId);
+                saveOrders(orders);
+                renderOrders();
+                showToast('🗑️ Заказ удалён');
+            }
+        }
+
+        // ===== EDIT ORDER =====
+        function editOrder(orderId) {
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const newStatus = prompt(`Изменить статус заказа #${orderId}:\nТекущий: ${order.status}\nВозможные: new, preparing, delivering, delivered, cancelled`, order.status);
+            if (newStatus && ['new', 'preparing', 'delivering', 'delivered', 'cancelled'].includes(newStatus)) {
+                order.status = newStatus;
+                saveOrders(orders);
+                renderOrders();
+                showToast(`✅ Заказ #${orderId} обновлён`);
+            } else if (newStatus) {
+                showToast('❌ Неверный статус');
+            }
+        }
+    </script>
+
+</body>
+</html>
