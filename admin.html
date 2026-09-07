@@ -488,7 +488,24 @@
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <script>
+    <script type="module">
+        // ===== FIREBASE =====
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGlmC0Zf8ZMnkAMH9hQ-JOdfUA4MWs7Yk",
+            authDomain: "sushi-miha.firebaseapp.com",
+            projectId: "sushi-miha",
+            storageBucket: "sushi-miha.firebasestorage.app",
+            messagingSenderId: "697215774600",
+            appId: "1:697215774600:web:9d44d0d2979e1cca54d43d",
+            measurementId: "G-ZRM1KC0M2P"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         // ===== SECURITY CONFIG =====
         const SECURITY = {
             maxLoginAttempts: 5,
@@ -673,14 +690,32 @@
 
         // ===== ORDERS =====
         let currentFilter = 'all';
+        let allOrders = [];
+        let ordersLoaded = false;
+
+        // Load orders from Firebase in real-time
+        const ordersRef = ref(db, 'orders');
+        onValue(ordersRef, (snapshot) => {
+            allOrders = [];
+            snapshot.forEach((child) => {
+                allOrders.push({ id: child.key, ...child.val() });
+            });
+            ordersLoaded = true;
+            renderOrders();
+        });
 
         function getOrders() {
-            const data = localStorage.getItem('sushiOrders');
-            return data ? JSON.parse(data) : [];
+            return [...allOrders];
         }
 
-        function saveOrders(orders) {
-            localStorage.setItem('sushiOrders', JSON.stringify(orders));
+        function updateOrderStatus(orderId, newStatus) {
+            const orderRef = ref(db, 'orders/' + orderId);
+            update(orderRef, { status: newStatus });
+        }
+
+        function deleteOrderFromFirebase(orderId) {
+            const orderRef = ref(db, 'orders/' + orderId);
+            remove(orderRef);
         }
 
         function renderOrders() {
@@ -850,15 +885,9 @@
         }
 
         function changeStatus(orderId, newStatus) {
-            const orders = getOrders();
-            const order = orders.find(o => o.id === orderId);
-            if (order) {
-                order.status = newStatus;
-                saveOrders(orders);
-                renderOrders();
-                const labels = { new: 'Новый', preparing: 'Готовится', delivering: 'Доставка', delivered: 'Доставлен', cancelled: 'Отменён' };
-                showToast(`✅ Заказ #${orderId} — ${labels[newStatus]}`);
-            }
+            updateOrderStatus(orderId, newStatus);
+            const labels = { new: 'Новый', preparing: 'Готовится', delivering: 'Доставка', delivered: 'Доставлен', cancelled: 'Отменён' };
+            showToast(`✅ Заказ #${orderId} — ${labels[newStatus]}`);
         }
 
         function acceptOrder(orderId) {
@@ -903,25 +932,6 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-
-        // Listen for new orders from other tabs
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'sushiOrders' || e.key === 'sushiOrdersSync') {
-                renderOrders();
-                playNotificationSound();
-                showToast('🔔 Новый заказ!');
-            }
-        });
-        
-        // Also listen for custom sync events
-        setInterval(() => {
-            const lastSync = localStorage.getItem('sushiOrdersLastSync');
-            const currentSync = localStorage.getItem('sushiOrdersSync');
-            if (lastSync !== currentSync && currentSync) {
-                localStorage.setItem('sushiOrdersLastSync', currentSync);
-                renderOrders();
-            }
-        }, 2000);
         
         // Notification sound
         function playNotificationSound() {
@@ -1083,7 +1093,9 @@
         function clearAllData() {
             if (confirm('⚠️ Вы уверены? Все заказы будут удалены безвозвратно!')) {
                 if (confirm('🔴 Повторное подтверждение: удалить ВСЕ данные?')) {
-                    localStorage.removeItem('sushiOrders');
+                    // Delete all orders from Firebase
+                    const ordersRef = ref(db, 'orders');
+                    remove(ordersRef);
                     renderOrders();
                     showToast('🗑️ Все данные удалены');
                 }
@@ -1168,10 +1180,7 @@
         // ===== DELETE ORDER =====
         function deleteOrder(orderId) {
             if (confirm(`❌ Удалить заказ #${orderId}? Это действие нельзя отменить.`)) {
-                let orders = getOrders();
-                orders = orders.filter(o => o.id !== orderId);
-                saveOrders(orders);
-                renderOrders();
+                deleteOrderFromFirebase(orderId);
                 showToast('🗑️ Заказ удалён');
             }
         }
@@ -1184,9 +1193,7 @@
 
             const newStatus = prompt(`Изменить статус заказа #${orderId}:\nТекущий: ${order.status}\nВозможные: new, preparing, delivering, delivered, cancelled`, order.status);
             if (newStatus && ['new', 'preparing', 'delivering', 'delivered', 'cancelled'].includes(newStatus)) {
-                order.status = newStatus;
-                saveOrders(orders);
-                renderOrders();
+                updateOrderStatus(orderId, newStatus);
                 showToast(`✅ Заказ #${orderId} обновлён`);
             } else if (newStatus) {
                 showToast('❌ Неверный статус');

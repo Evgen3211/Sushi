@@ -1228,7 +1228,56 @@
     <!-- TEST ORDER BUTTON -->
     <button class="test-order-btn" onclick="createTestOrder()">🧪 Тестовый заказ</button>
 
-    <script>
+    <script type="module">
+        // ===== FIREBASE =====
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
+        import { getDatabase, ref, push, onValue, query, orderByChild } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGlmC0Zf8ZMnkAMH9hQ-JOdfUA4MWs7Yk",
+            authDomain: "sushi-miha.firebaseapp.com",
+            projectId: "sushi-miha",
+            storageBucket: "sushi-miha.firebasestorage.app",
+            messagingSenderId: "697215774600",
+            appId: "1:697215774600:web:9d44d0d2979e1cca54d43d",
+            measurementId: "G-ZRM1KC0M2P"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+
+        // ===== ORDERS WITH FIREBASE =====
+        let allOrders = [];
+        let ordersLoaded = false;
+
+        // Load orders from Firebase
+        const ordersRef = ref(db, 'orders');
+        onValue(ordersRef, (snapshot) => {
+            allOrders = [];
+            snapshot.forEach((child) => {
+                allOrders.push({ id: child.key, ...child.val() });
+            });
+            ordersLoaded = true;
+            
+            // Notify admin page
+            localStorage.setItem('sushiOrdersSync', Date.now().toString());
+        });
+
+        function getOrders() {
+            return [...allOrders];
+        }
+
+        function saveOrders(orders) {
+            // Firebase uses push for new orders, not replace
+            return Promise.resolve();
+        }
+
+        function saveOrderToFirebase(order) {
+            const ordersRef = ref(db, 'orders');
+            push(ordersRef, order);
+        }
         const menuData = [
             // Роллы
             { id:1, name:'Филадельфия', jp:'フィラデルフィア', category:'rolls', price:490, emoji:'🍣', desc:'Лосось, сливочный сыр, авокадо, огурец', badge:'hot', badgeText:'ХИТ' },
@@ -1559,10 +1608,8 @@
                     total: window.currentOrder.total
                 };
 
-                // Save to localStorage
-                const orders = getOrders();
-                orders.push(order);
-                saveOrders(orders);
+                // Save to Firebase
+                saveOrderToFirebase(order);
                 
                 // Force storage event for immediate sync
                 localStorage.setItem('sushiOrdersSync', Date.now().toString());
@@ -1732,29 +1779,11 @@
                     total: 1170
                 };
                 
-                // Save directly without function call
-                let orders = [];
-                try {
-                    const data = localStorage.getItem('sushiOrders');
-                    if (data) {
-                        orders = JSON.parse(data);
-                    }
-                } catch(e) {
-                    alert('Ошибка чтения: ' + e.message);
-                    return;
-                }
+                // Save to Firebase
+                saveOrderToFirebase(order);
                 
-                orders.push(order);
-                
-                try {
-                    localStorage.setItem('sushiOrders', JSON.stringify(orders));
-                    alert('Заказ #' + orderId + ' сохранён! Всего заказов: ' + orders.length);
-                } catch(e) {
-                    alert('Ошибка записи: ' + e.message);
-                    return;
-                }
-                
-                showToast('✅ Тестовый заказ #' + orderId + ' создан! Проверьте admin.html');
+                alert('Заказ #' + orderId + ' отправлен в базу!');
+                showToast('✅ Тестовый заказ #' + orderId + ' создан!');
             } catch(e) {
                 alert('Ошибка: ' + e.message);
             }
